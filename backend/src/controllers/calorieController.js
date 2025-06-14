@@ -1,11 +1,11 @@
-const axios = require("axios");
-const { usdaApiKey } = require("../config/config");
-const SearchHistory = require("../models/SearchHistory");
+import axios from "axios";
+import { usdaApiKey } from "../config/config.js";
+import SearchHistory from "../models/SearchHistory.js";
 
 // @desc    Get calories for a dish
 // @route   POST /get-calories
 // @access  Private
-const getCalories = async (req, res) => {
+export const getCalories = async (req, res) => {
   try {
     const { dish_name, servings } = req.body;
 
@@ -90,7 +90,7 @@ const getCalories = async (req, res) => {
 // @desc    Get user's search history
 // @route   GET /search-history
 // @access  Private
-const getSearchHistory = async (req, res) => {
+export const getSearchHistory = async (req, res) => {
   try {
     const userId = req.user._id;
     const limit = parseInt(req.query.limit) || 10;
@@ -115,7 +115,7 @@ const getSearchHistory = async (req, res) => {
 // @desc    Clear user's search history
 // @route   DELETE /search-history
 // @access  Private
-const clearSearchHistory = async (req, res) => {
+export const clearSearchHistory = async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -236,5 +236,3 @@ const getCaloriesFromNutrients = (nutrients) => {
 
   return energyNutrient ? energyNutrient.value : null;
 };
-
-module.exports = { getCalories, getSearchHistory, clearSearchHistory };

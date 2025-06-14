@@ -46,19 +46,11 @@ The easiest way to run the application is using Docker:
 
 3. Run the start script:
 
-   ```
-   ./start-docker.sh
-   ```
-
-   This will create a `.env` file if it doesn't exist. Update the `.env` file with your USDA API key.
-
-4. Run the script again to start the containers:
-
-   ```
-   ./start-docker.sh
+   ```bash
+   docker-compose up --build
    ```
 
-5. Access the application:
+4. Access the application:
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:5000
 

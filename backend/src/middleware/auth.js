@@ -1,9 +1,9 @@
-const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../config/config");
-const User = require("../models/User");
+import jwt from "jsonwebtoken";
+import { jwtSecret } from "../config/config.js";
+import User from "../models/User.js";
 
 // Middleware to verify JWT token and protect routes
-const protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
 
   // Check if token exists in headers
@@ -36,5 +36,3 @@ const protect = async (req, res, next) => {
       .json({ success: false, message: "Not authorized, no token" });
   }
 };
-
-module.exports = { protect };

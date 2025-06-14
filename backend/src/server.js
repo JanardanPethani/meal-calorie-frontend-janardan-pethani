@@ -1,12 +1,12 @@
-const express = require("express");
-const cors = require("cors");
-const connectDB = require("./utils/db");
-const { port, nodeEnv } = require("./config/config");
-const { errorHandler, notFound } = require("./middleware/errorHandler");
+import express from "express";
+import cors from "cors";
+import { connectDB } from "./utils/db.js";
+import { port, nodeEnv } from "./config/config.js";
+import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 // Import routes
-const authRoutes = require("./routes/authRoutes");
-const calorieRoutes = require("./routes/calorieRoutes");
+import authRoutes from "./routes/authRoutes.js";
+import calorieRoutes from "./routes/calorieRoutes.js";
 
 // Connect to database
 connectDB();
@@ -48,4 +48,4 @@ process.on("unhandledRejection", (err) => {
   server.close(() => process.exit(1));
 });
 
-module.exports = app;
+export default app;

@@ -1,7 +1,7 @@
-const request = require("supertest");
-const mongoose = require("mongoose");
-const app = require("../server");
-const User = require("../models/User");
+import request from "supertest";
+import mongoose from "mongoose";
+import app from "../server.js";
+import User from "../models/User.js";
 
 let token;
 let userId;

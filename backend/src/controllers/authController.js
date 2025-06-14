@@ -1,6 +1,6 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const { jwtSecret } = require("../config/config");
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import { jwtSecret } from "../config/config.js";
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -10,7 +10,7 @@ const generateToken = (id) => {
 // @desc    Register a new user
 // @route   POST /auth/register
 // @access  Public
-const registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
   console.log(firstName, lastName, email, password);
@@ -53,7 +53,7 @@ const registerUser = async (req, res) => {
 // @desc    Login user
 // @route   POST /auth/login
 // @access  Public
-const loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -85,7 +85,7 @@ const loginUser = async (req, res) => {
 // @desc    Get user profile
 // @route   GET /auth/profile
 // @access  Private
-const getUserProfile = async (req, res) => {
+export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
 
@@ -106,5 +106,3 @@ const getUserProfile = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
-
-module.exports = { registerUser, loginUser, getUserProfile };

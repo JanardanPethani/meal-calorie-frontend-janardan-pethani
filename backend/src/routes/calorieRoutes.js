@@ -1,11 +1,11 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getCalories,
   getSearchHistory,
   clearSearchHistory,
-} = require("../controllers/calorieController");
-const { protect } = require("../middleware/auth");
-const { apiLimiter } = require("../middleware/rateLimiter");
+} from "../controllers/calorieController.js";
+import { protect } from "../middleware/auth.js";
+import { apiLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -17,4 +17,4 @@ router.post("/get-calories", protect, getCalories);
 router.get("/search-history", protect, getSearchHistory);
 router.delete("/search-history", protect, clearSearchHistory);
 
-module.exports = router;
+export default router;

@@ -1,8 +1,8 @@
-const mongoose = require("mongoose");
-const { mongodbUri } = require("../config/config");
+import mongoose from "mongoose";
+import { mongodbUri } from "../config/config.js";
 
 // Connect to MongoDB
-const connectDB = async () => {
+export const connectDB = async () => {
   try {
     const conn = await mongoose.connect(mongodbUri, {
       // These options are no longer needed in Mongoose 6+, but kept for compatibility
@@ -17,5 +17,3 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
-
-module.exports = connectDB;

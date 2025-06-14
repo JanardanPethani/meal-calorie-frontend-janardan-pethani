@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const searchHistorySchema = new mongoose.Schema({
   userId: {
@@ -38,4 +38,4 @@ searchHistorySchema.index({ userId: 1, createdAt: -1 });
 
 const SearchHistory = mongoose.model("SearchHistory", searchHistorySchema);
 
-module.exports = SearchHistory;
+export default SearchHistory;

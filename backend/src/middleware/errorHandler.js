@@ -1,4 +1,4 @@
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
 
   // Log error for server-side debugging
@@ -15,10 +15,8 @@ const errorHandler = (err, req, res, next) => {
 };
 
 // Handle 404 errors
-const notFound = (req, res, next) => {
+export const notFound = (req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
   next(error);
 };
-
-module.exports = { errorHandler, notFound };
