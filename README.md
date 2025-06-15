@@ -46,8 +46,7 @@ A full-stack application that allows users to input a dish name and number of se
 ## Setup
 
 ### Docker Setup (Recommended)
-
-The easiest way to run the application is using Docker:
+> Note: ENV variables have been added to compose file as it is not production version.
 
 1. Make sure you have Docker and Docker Compose installed on your system.
 
