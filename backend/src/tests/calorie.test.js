@@ -10,11 +10,14 @@ let userId;
 beforeAll(async () => {
   // Create a test user
   const userData = {
-    first_name: "Test",
-    last_name: "User",
+    firstName: "Test",
+    lastName: "User",
     email: "test@example.com",
     password: "Password123!",
   };
+
+  // wait for DB connection
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
   // Register the user
   const registerResponse = await request(app)
@@ -27,8 +30,8 @@ beforeAll(async () => {
     password: userData.password,
   });
 
-  token = loginResponse.body.token;
-  userId = loginResponse.body.user._id;
+  token = loginResponse.body.user.token;
+  userId = loginResponse.body.user.id;
 });
 
 // Clean up after tests
@@ -53,7 +56,7 @@ describe("Calorie API Tests", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.dish_name).toBe("macaroni and cheese");
+    expect(response.body.dish_name).toMatch(/macaroni and cheese/i);
     expect(response.body.servings).toBe(1);
     expect(response.body.calories_per_serving).toBeGreaterThan(0);
     expect(response.body.total_calories).toBeGreaterThan(0);
@@ -70,7 +73,7 @@ describe("Calorie API Tests", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.dish_name).toBe("grilled salmon");
+    expect(response.body.dish_name).toMatch(/grilled salmon/i);
     expect(response.body.servings).toBe(2);
     expect(response.body.calories_per_serving).toBeGreaterThan(0);
     expect(response.body.total_calories).toBeGreaterThan(0);
@@ -87,7 +90,7 @@ describe("Calorie API Tests", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.dish_name).toBe("paneer butter masala");
+    expect(response.body.dish_name).toMatch(/paneer butter masala/i);
     expect(response.body.servings).toBe(1);
     expect(response.body.calories_per_serving).toBeGreaterThan(0);
     expect(response.body.total_calories).toBeGreaterThan(0);

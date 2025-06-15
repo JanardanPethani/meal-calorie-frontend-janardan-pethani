@@ -1,111 +1,125 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MealForm } from "@/components/meals/MealForm";
 import { useMealStore } from "@/lib/stores/mealStore";
 import { useAuthStore } from "@/lib/stores/authStore";
 
 // Mock the stores
 vi.mock("@/lib/stores/mealStore", () => ({
-  useMealStore: vi.fn(),
+  useMealStore: () => ({
+    fetchCalories: mockFetchCalories,
+    isLoading: false,
+    error: null,
+  }),
+  getState: vi.fn().mockReturnValue({
+    error: null,
+  }),
 }));
 
 vi.mock("@/lib/stores/authStore", () => ({
-  useAuthStore: vi.fn(),
+  useAuthStore: () => ({
+    isAuthenticated: true,
+    token: "fake-token",
+  }),
 }));
 
 // Mock the fetch function
-global.fetch = vi.fn();
+global.fetch = vi.fn(
+  () =>
+    Promise.resolve({
+      json: () => Promise.resolve({}),
+      ok: true,
+    }) as unknown as Promise<Response>
+);
+
+// Define mock outside to use in the mock implementation
+const mockFetchCalories = vi.fn();
 
 describe("MealForm Component", () => {
-  const mockGetCalories = vi.fn();
-  const mockIsLoading = false;
-  const mockError = null;
-
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Mock the meal store
-    useMealStore.mockReturnValue({
-      getCalories: mockGetCalories,
-      isLoading: mockIsLoading,
-      error: mockError,
-    });
-
-    // Mock the auth store
-    useAuthStore.mockReturnValue({
-      isAuthenticated: true,
-      token: "fake-token",
-    });
-
     // Reset fetch mock
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global.fetch as any).mockReset();
+    vi.mocked(global.fetch).mockReset();
   });
 
-  it("renders the form correctly", () => {
+  it("renders the form correctly", async () => {
     render(<MealForm />);
 
     expect(screen.getByLabelText(/dish name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/servings/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/number of servings/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /calculate/i })
+      screen.getByRole("button", {
+        name: /calculate calories/i,
+      })
     ).toBeInTheDocument();
   });
 
   it("validates empty dish name", async () => {
+    const user = userEvent.setup();
     render(<MealForm />);
 
-    const servingsInput = screen.getByLabelText(/servings/i);
-    fireEvent.change(servingsInput, { target: { value: "2" } });
+    const servingsInput = screen.getByLabelText(/number of servings/i);
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "2");
 
-    const submitButton = screen.getByRole("button", { name: /calculate/i });
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByRole("button", {
+      name: /calculate calories/i,
+    });
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText(/dish name is required/i)).toBeInTheDocument();
     });
 
-    expect(mockGetCalories).not.toHaveBeenCalled();
+    expect(mockFetchCalories).not.toHaveBeenCalled();
   });
 
   it("validates invalid servings", async () => {
+    const user = userEvent.setup();
     render(<MealForm />);
 
     const dishNameInput = screen.getByLabelText(/dish name/i);
-    fireEvent.change(dishNameInput, { target: { value: "Pizza" } });
+    await user.clear(dishNameInput);
+    await user.type(dishNameInput, "Pizza");
 
-    const servingsInput = screen.getByLabelText(/servings/i);
-    fireEvent.change(servingsInput, { target: { value: "0" } });
+    const servingsInput = screen.getByLabelText(/number of servings/i);
+    await user.clear(servingsInput);
 
-    const submitButton = screen.getByRole("button", { name: /calculate/i });
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByRole("button", {
+      name: /calculate calories/i,
+    });
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(
-        screen.getByText(/servings must be greater than 0/i)
+        screen.getByText(/Servings must be a positive number/i)
       ).toBeInTheDocument();
     });
 
-    expect(mockGetCalories).not.toHaveBeenCalled();
+    expect(mockFetchCalories).not.toHaveBeenCalled();
   });
 
   it("submits the form with valid data", async () => {
+    const user = userEvent.setup();
     render(<MealForm />);
 
     const dishNameInput = screen.getByLabelText(/dish name/i);
-    fireEvent.change(dishNameInput, { target: { value: "Pizza" } });
+    await user.clear(dishNameInput);
+    await user.type(dishNameInput, "Pizza");
 
-    const servingsInput = screen.getByLabelText(/servings/i);
-    fireEvent.change(servingsInput, { target: { value: "2" } });
+    const servingsInput = screen.getByLabelText(/number of servings/i);
+    await user.clear(servingsInput);
+    await user.type(servingsInput, "2");
 
-    const submitButton = screen.getByRole("button", { name: /calculate/i });
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByRole("button", {
+      name: /calculate calories/i,
+    });
+    await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockGetCalories).toHaveBeenCalledWith({
-        dish_name: "Pizza",
-        servings: 2,
-      });
+      expect(mockFetchCalories).toHaveBeenCalledWith("Pizza", 2);
     });
   });
 });
