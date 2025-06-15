@@ -19,6 +19,7 @@ export interface MealResult {
 
 interface MealState {
   currentMeal: MealResult | null;
+  originalQuery: string | null;
   mealHistory: MealResult[];
   isLoading: boolean;
   isLoadingHistory: boolean;
@@ -33,6 +34,7 @@ interface MealState {
 
 export const useMealStore = create<MealState>()((set, get) => ({
   currentMeal: null,
+  originalQuery: null,
   mealHistory: [],
   isLoading: false,
   isLoadingHistory: false,
@@ -40,7 +42,7 @@ export const useMealStore = create<MealState>()((set, get) => ({
 
   fetchCalories: async (dishName, servings) => {
     try {
-      set({ isLoading: true, error: null });
+      set({ isLoading: true, error: null, originalQuery: dishName });
       const response = await getCalories({ dish_name: dishName, servings });
 
       if (response.success) {
@@ -167,7 +169,7 @@ export const useMealStore = create<MealState>()((set, get) => ({
   },
 
   clearCurrentMeal: () => {
-    set({ currentMeal: null });
+    set({ currentMeal: null, originalQuery: null });
   },
 
   clearError: () => {

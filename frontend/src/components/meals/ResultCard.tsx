@@ -11,18 +11,34 @@ import {
 import { useMealStore } from "@/lib/stores/mealStore";
 
 export function ResultCard() {
-  const { currentMeal } = useMealStore();
+  const { currentMeal, originalQuery } = useMealStore();
 
   if (!currentMeal) {
     return null;
   }
+
+  // Check if the original query is different from the matched dish name
+  const wasQueryCorrected =
+    originalQuery &&
+    originalQuery.toLowerCase().trim() !==
+      currentMeal.dish_name.toLowerCase().trim();
 
   return (
     <Card className="w-full bg-primary/5 h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl">Calorie Results</CardTitle>
         <CardDescription className="text-sm">
-          Nutrition information for {currentMeal.dish_name}
+          {wasQueryCorrected ? (
+            <>
+              Showing results for{" "}
+              <span className="font-medium">{currentMeal.dish_name}</span>
+              <span className="block text-xs text-muted-foreground mt-1">
+                (You searched for: {originalQuery})
+              </span>
+            </>
+          ) : (
+            <>Nutrition information for {currentMeal.dish_name}</>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col justify-center">

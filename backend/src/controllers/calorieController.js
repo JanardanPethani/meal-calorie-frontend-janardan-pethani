@@ -1,6 +1,7 @@
 import axios from "axios";
 import { usdaApiKey } from "../config/config.js";
 import SearchHistory from "../models/SearchHistory.js";
+import Fuse from "fuse.js";
 
 // @desc    Get calories for a dish
 // @route   POST /get-calories
@@ -30,8 +31,9 @@ export const getCalories = async (req, res) => {
         params: {
           query: dish_name,
           api_key: usdaApiKey,
-          pageSize: 5, // Limit to top 5 results for better matching
-          dataType: "Survey (FNDDS)", // Focus on food survey data which has better coverage for dishes
+          pageSize: 15, // Increased to get more options for better matching
+          sortBy: "dataType.keyword", // Sort by data type to prioritize higher quality data
+          sortOrder: "asc", // Ascending order
         },
       }
     );
@@ -43,9 +45,178 @@ export const getCalories = async (req, res) => {
         .json({ success: false, message: "Dish not found" });
     }
 
-    // Find best match using fuzzy matching (simple implementation)
-    // In a production app, we'd use a more sophisticated fuzzy matching algorithm
-    const bestMatch = findBestMatch(dish_name, response.data.foods);
+    // Pre-process foods to ensure all have valid descriptions
+    const validFoods = response.data.foods.filter(
+      (food) =>
+        food &&
+        typeof food.description === "string" &&
+        food.description.trim() !== ""
+    );
+
+    if (validFoods.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No valid food descriptions found" });
+    }
+
+    // First, check for exact matches (case-insensitive)
+    const normalizedQuery = dish_name.toLowerCase().trim();
+    const exactMatches = validFoods.filter(
+      (food) => food.description.toLowerCase() === normalizedQuery
+    );
+
+    // If we have exact matches, use the first one
+    if (exactMatches.length > 0) {
+      console.log(
+        `Found exact match for "${dish_name}": "${exactMatches[0].description}"`
+      );
+      const bestMatch = exactMatches[0];
+
+      // Get calories per serving
+      const caloriesPerServing = getCaloriesFromNutrients(
+        bestMatch.foodNutrients
+      );
+
+      if (!caloriesPerServing) {
+        return res.status(404).json({
+          success: false,
+          message: "Calorie information not available for this dish",
+        });
+      }
+
+      // Calculate total calories
+      const totalCalories = caloriesPerServing * servings;
+
+      // Create meal data object
+      const mealData = {
+        dish_name: bestMatch.description,
+        servings: Number(servings),
+        calories_per_serving: Math.round(caloriesPerServing),
+        total_calories: Math.round(totalCalories),
+        source: "USDA FoodData Central",
+      };
+
+      // Save to search history in database
+      await saveSearchHistory(req.user._id, mealData);
+
+      // Return result
+      return res.status(200).json({
+        success: true,
+        ...mealData,
+      });
+    }
+
+    // Next, check for simple matches where the query is the first word of the food name
+    // This helps with cases like "strawberry" matching "Strawberry, raw" instead of "Pie, strawberry"
+    if (!normalizedQuery.includes(" ")) {
+      // Only for single-word queries
+      const simpleMatches = validFoods.filter((food) => {
+        const foodName = food.description.toLowerCase();
+        return (
+          foodName.startsWith(normalizedQuery + ",") ||
+          foodName.startsWith(normalizedQuery + " ")
+        );
+      });
+
+      if (simpleMatches.length > 0) {
+        console.log(
+          `Found simple match for "${dish_name}": "${simpleMatches[0].description}"`
+        );
+        const bestMatch = simpleMatches[0];
+
+        // Get calories per serving
+        const caloriesPerServing = getCaloriesFromNutrients(
+          bestMatch.foodNutrients
+        );
+
+        if (!caloriesPerServing) {
+          return res.status(404).json({
+            success: false,
+            message: "Calorie information not available for this dish",
+          });
+        }
+
+        // Calculate total calories
+        const totalCalories = caloriesPerServing * servings;
+
+        // Create meal data object
+        const mealData = {
+          dish_name: bestMatch.description,
+          servings: Number(servings),
+          calories_per_serving: Math.round(caloriesPerServing),
+          total_calories: Math.round(totalCalories),
+          source: "USDA FoodData Central",
+        };
+
+        // Save to search history in database
+        await saveSearchHistory(req.user._id, mealData);
+
+        // Return result
+        return res.status(200).json({
+          success: true,
+          ...mealData,
+        });
+      }
+    }
+
+    // If no exact or simple match, use Fuse.js for fuzzy matching
+    const options = {
+      includeScore: true,
+      keys: ["description"],
+      threshold: 0.4, // Slightly higher threshold to allow more matches
+      ignoreLocation: true, // Ignore location in string for better matching
+      // Custom sorting strategy to prioritize exact matches and simple foods
+      sortFn: (a, b) => {
+        // Ensure both items exist and have a description property
+        if (!a.item || !b.item) return 0;
+        if (!a.item.description || !b.item.description) return 0;
+
+        const itemA = a.item.description.toLowerCase();
+        const itemB = b.item.description.toLowerCase();
+        const query = dish_name.toLowerCase().trim();
+
+        // Exact match gets highest priority
+        if (itemA === query && itemB !== query) return -1;
+        if (itemB === query && itemA !== query) return 1;
+
+        // Starts with query gets second priority
+        const aStartsWithQuery = itemA.startsWith(query);
+        const bStartsWithQuery = itemB.startsWith(query);
+        if (aStartsWithQuery && !bStartsWithQuery) return -1;
+        if (bStartsWithQuery && !aStartsWithQuery) return 1;
+
+        // Simple foods (no commas) get third priority
+        const aIsSimple = !itemA.includes(",");
+        const bIsSimple = !itemB.includes(",");
+        if (aIsSimple && !bIsSimple) return -1;
+        if (bIsSimple && !aIsSimple) return 1;
+
+        // Fall back to Fuse.js score
+        return a.score - b.score;
+      },
+    };
+
+    const fuse = new Fuse(validFoods, options);
+    const fuseResults = fuse.search(dish_name);
+
+    if (fuseResults.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No matching foods found" });
+    }
+
+    // Log the top 3 matches for debugging
+    console.log("Top matches for:", dish_name);
+    fuseResults.slice(0, 3).forEach((result, i) => {
+      console.log(
+        `${i + 1}. ${result.item.description} (score: ${result.score.toFixed(
+          2
+        )})`
+      );
+    });
+
+    // Get the best match
+    const bestMatch = fuseResults[0].item;
 
     // Get calories per serving
     const caloriesPerServing = getCaloriesFromNutrients(
@@ -62,9 +233,12 @@ export const getCalories = async (req, res) => {
     // Calculate total calories
     const totalCalories = caloriesPerServing * servings;
 
+    // Use the matched food description instead of user input
+    const matchedDishName = bestMatch.description;
+
     // Create meal data object
     const mealData = {
-      dish_name: dish_name,
+      dish_name: matchedDishName,
       servings: Number(servings),
       calories_per_serving: Math.round(caloriesPerServing),
       total_calories: Math.round(totalCalories),
@@ -192,74 +366,6 @@ const saveSearchHistory = async (userId, mealData) => {
     // Don't throw error to prevent API failure
   }
 };
-
-// Helper function to find the best match from USDA API results
-const findBestMatch = (query, foods) => {
-  // Normalize the search query
-  const normalizedQuery = query.toLowerCase().trim();
-
-  // Calculate similarity scores for each food
-  const scoredFoods = foods.map((food) => {
-    const foodName = food.description.toLowerCase();
-
-    // Calculate Levenshtein distance (lower is better)
-    const distance = levenshteinDistance(normalizedQuery, foodName);
-
-    // Calculate exact word matches
-    const queryWords = normalizedQuery.split(/\s+/);
-    const foodWords = foodName.split(/\s+/);
-    const wordMatchCount = queryWords.filter((word) =>
-      foodWords.some((foodWord) => foodWord.includes(word))
-    ).length;
-
-    // Calculate word match ratio
-    const wordMatchRatio =
-      queryWords.length > 0 ? wordMatchCount / queryWords.length : 0;
-
-    // Calculate final score (higher is better)
-    // We use a combination of word match ratio and inverse distance
-    const maxDistance = Math.max(normalizedQuery.length, foodName.length);
-    const distanceScore = maxDistance > 0 ? 1 - distance / maxDistance : 0;
-
-    // Combined score with higher weight on word matches
-    const score = wordMatchRatio * 0.7 + distanceScore * 0.3;
-
-    return { food, score };
-  });
-
-  // Sort by score (descending) and return the best match
-  scoredFoods.sort((a, b) => b.score - a.score);
-  return scoredFoods[0].food;
-};
-
-// Levenshtein distance calculation for string similarity
-function levenshteinDistance(str1, str2) {
-  const m = str1.length;
-  const n = str2.length;
-
-  // Create a matrix of size (m+1) x (n+1)
-  const dp = Array(m + 1)
-    .fill()
-    .map(() => Array(n + 1).fill(0));
-
-  // Initialize the matrix
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-
-  // Fill the matrix
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1, // deletion
-        dp[i][j - 1] + 1, // insertion
-        dp[i - 1][j - 1] + cost // substitution
-      );
-    }
-  }
-
-  return dp[m][n];
-}
 
 // Helper function to extract calories from nutrients
 const getCaloriesFromNutrients = (nutrients) => {
