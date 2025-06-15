@@ -2,6 +2,20 @@
 
 A full-stack application that allows users to input a dish name and number of servings and returns the total calorie count using the USDA FoodData Central API.
 
+## Screenshots
+
+### Home Page
+
+![Home Page](HomePage.png)
+
+### Dashboard
+
+![Dashboard](Dashboard.png)
+
+### Calorie Lookup
+
+![Calorie Lookup](Calories.png)
+
 ## Features
 
 - User authentication (register, login)
