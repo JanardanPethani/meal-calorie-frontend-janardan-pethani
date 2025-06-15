@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { useAuthStore } from "@/lib/stores/authStore";
 import {
@@ -34,6 +32,7 @@ import {
   LoginFormValues,
   RegisterFormValues,
 } from "@/lib/validations/auth";
+import { showSuccessToast } from "@/lib/utils";
 
 interface AuthFormProps {
   type: "login" | "register";
@@ -42,13 +41,18 @@ interface AuthFormProps {
 export function AuthForm({ type }: AuthFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { login, register, error, clearError } = useAuthStore();
+  const { login, register, clearError } = useAuthStore();
+
+  // Clear errors when component mounts or when type changes
+  useEffect(() => {
+    clearError();
+  }, [type, clearError]);
 
   // Determine which schema to use based on form type
   const schema = type === "login" ? loginSchema : registerSchema;
 
   // Initialize form
-  const form = useForm({
+  const form = useForm<LoginFormValues | RegisterFormValues>({
     resolver: zodResolver(schema),
     defaultValues:
       type === "login"
@@ -72,7 +76,7 @@ export function AuthForm({ type }: AuthFormProps) {
 
       // Check if there's an error after login/register attempt
       if (!useAuthStore.getState().error) {
-        toast.success(
+        showSuccessToast(
           `${type === "login" ? "Login" : "Registration"} successful!`
         );
         router.push("/dashboard");
@@ -85,26 +89,23 @@ export function AuthForm({ type }: AuthFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>
+    <Card className="w-full max-w-md mx-auto shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl md:text-2xl">
           {type === "login" ? "Login" : "Create an Account"}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm md:text-base">
           {type === "login"
             ? "Enter your credentials to access your account"
             : "Fill in your details to create a new account"}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-3 md:space-y-4"
+          >
             {type === "register" && (
               <>
                 <FormField
@@ -112,11 +113,11 @@ export function AuthForm({ type }: AuthFormProps) {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                      <FormLabel className="text-sm">First Name</FormLabel>
                       <FormControl>
                         <Input placeholder="John" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
@@ -126,11 +127,11 @@ export function AuthForm({ type }: AuthFormProps) {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                      <FormLabel className="text-sm">Last Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Doe" {...field} />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
@@ -142,7 +143,7 @@ export function AuthForm({ type }: AuthFormProps) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-sm">Email</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
@@ -150,7 +151,7 @@ export function AuthForm({ type }: AuthFormProps) {
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
@@ -160,16 +161,21 @@ export function AuthForm({ type }: AuthFormProps) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="text-sm">Password</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="******" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full mt-2"
+              disabled={isLoading}
+              size="lg"
+            >
               {isLoading
                 ? "Processing..."
                 : type === "login"
@@ -179,16 +185,16 @@ export function AuthForm({ type }: AuthFormProps) {
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex justify-center">
+      <CardFooter className="flex justify-center pt-2 pb-4">
         {type === "login" ? (
-          <p className="text-sm text-center">
+          <p className="text-xs md:text-sm text-center">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="text-primary hover:underline">
               Register
             </Link>
           </p>
         ) : (
-          <p className="text-sm text-center">
+          <p className="text-xs md:text-sm text-center">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline">
               Login

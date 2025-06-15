@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { loginUser, registerUser } from "../api";
+import { showErrorToast } from "../utils";
 
 interface User {
   id: string;
@@ -49,12 +50,28 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
             });
           } else {
-            set({ error: "Login failed", isLoading: false });
+            const errorMsg = response.message || "Login failed";
+            showErrorToast(new Error(errorMsg));
+
+            // Logout on login error to clear any stale state
+            localStorage.removeItem("token");
+            set({
+              error: errorMsg, // Still store error in state for potential programmatic use
+              isLoading: false,
+              user: null,
+              isAuthenticated: false,
+            });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMsg = showErrorToast(error, "Login failed");
+
+          // Logout on login error to clear any stale state
+          localStorage.removeItem("token");
           set({
-            error: error.response?.data?.message || "Login failed",
+            error: errorMsg, // Still store error in state for potential programmatic use
             isLoading: false,
+            user: null,
+            isAuthenticated: false,
           });
         }
       },
@@ -79,11 +96,17 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
             });
           } else {
-            set({ error: "Registration failed", isLoading: false });
+            const errorMsg = response.message || "Registration failed";
+            showErrorToast(new Error(errorMsg));
+            set({
+              error: errorMsg, // Still store error in state for potential programmatic use
+              isLoading: false,
+            });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorMsg = showErrorToast(error, "Registration failed");
           set({
-            error: error.response?.data?.message || "Registration failed",
+            error: errorMsg, // Still store error in state for potential programmatic use
             isLoading: false,
           });
         }
@@ -96,6 +119,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           isAuthenticated: false,
+          error: null,
         });
       },
 

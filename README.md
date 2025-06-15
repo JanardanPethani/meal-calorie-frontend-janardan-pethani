@@ -126,13 +126,6 @@ cd backend
 npm test
 ```
 
-This will run the test suite that includes:
-
-- Tests for common dishes like 'macaroni and cheese', 'grilled salmon', and 'paneer butter masala'
-- Tests for non-existent dishes
-- Tests for invalid servings (zero or negative)
-- Tests for search history functionality
-
 ### Frontend Tests
 
 To run the frontend component tests:
@@ -156,39 +149,6 @@ cd frontend
 npm run test:e2e
 ```
 
-## API Endpoints
-
-### Authentication
-
-- **POST /auth/register** - Register a new user
-- **POST /auth/login** - Login a user
-- **GET /auth/profile** - Get user profile (protected)
-
-### Calorie Calculation
-
-- **POST /get-calories** - Get calorie information for a dish (protected)
-- **GET /search-history** - Get user's search history (protected)
-- **DELETE /search-history** - Clear user's search history (protected)
-
 ## USDA API Notes
 
 [API Doc](https://app.swaggerhub.com/apis-docs/fdcnal/food-data_central_api/1.0.1)
-
-#### Rate limit
-
-- FoodData Central currently limits the number of API requests to a default rate of 1,000 requests per hour per IP address.
-- Exceeding this limit will cause the API key to be temporarily blocked for 1 hour.
-
-## Calorie Calculation
-
-```math
-Total Calories = (Protein × 4) + (Carbohydrates × 4) + (Fat × 9)
-```
-
-Where:
-
-- Protein: 4 calories per gram
-- Carbohydrates: 4 calories per gram
-- Fat: 9 calories per gram
-
-This formula is based on the standard Atwater factors, which are the most widely used energy conversion factors for calculating the energy content of foods.

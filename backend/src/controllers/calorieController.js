@@ -134,6 +134,43 @@ export const clearSearchHistory = async (req, res) => {
   }
 };
 
+// @desc    Delete a single search history item
+// @route   DELETE /search-history/:id
+// @access  Private
+export const deleteSearchHistoryItem = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const historyItemId = req.params.id;
+
+    // Find the history item and ensure it belongs to the current user
+    const historyItem = await SearchHistory.findOne({
+      _id: historyItemId,
+      userId: userId,
+    });
+
+    if (!historyItem) {
+      return res.status(404).json({
+        success: false,
+        message: "History item not found or does not belong to you",
+      });
+    }
+
+    // Delete the item
+    await SearchHistory.findByIdAndDelete(historyItemId);
+
+    res.status(200).json({
+      success: true,
+      message: "History item deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting history item:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting history item",
+    });
+  }
+};
+
 // Helper function to save search history
 const saveSearchHistory = async (userId, mealData) => {
   try {

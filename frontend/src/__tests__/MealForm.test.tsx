@@ -38,6 +38,7 @@ describe("MealForm Component", () => {
     });
 
     // Reset fetch mock
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockReset();
   });
 

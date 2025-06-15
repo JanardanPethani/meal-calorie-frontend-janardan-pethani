@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +20,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { useMealStore } from "@/lib/stores/mealStore";
 import { mealSchema, MealFormValues } from "@/lib/validations/meal";
 
 export function MealForm() {
-  const { fetchCalories, error, isLoading } = useMealStore();
+  const { fetchCalories, isLoading } = useMealStore();
 
   // Initialize form
   const form = useForm<MealFormValues>({
@@ -43,9 +40,9 @@ export function MealForm() {
     try {
       await fetchCalories(values.dish_name, values.servings);
 
-      // Check if there's an error after the fetch attempt
+      // If successful, reset the form
       if (!useMealStore.getState().error) {
-        toast.success("Calorie data fetched successfully!");
+        form.reset();
       }
     } catch (error) {
       console.error("Error fetching calories:", error);
@@ -53,59 +50,67 @@ export function MealForm() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Meal Calorie Lookup</CardTitle>
-        <CardDescription>
+    <Card className="w-full h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl">Meal Calorie Lookup</CardTitle>
+        <CardDescription className="text-sm">
           Enter a dish name and number of servings to get calorie information
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
+      <CardContent className="flex-grow">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="dish_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dish Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., chicken biryani" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 md:space-y-6 h-full flex flex-col"
+          >
+            <div className="space-y-4 flex-grow">
+              <FormField
+                control={form.control}
+                name="dish_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">Dish Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., chicken biryani" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="servings"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Number of Servings</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      placeholder="1"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="servings"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm">
+                      Number of Servings
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0.1"
+                        step="0.1"
+                        placeholder="1"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Calculating..." : "Calculate Calories"}
-            </Button>
+            <div className="mt-auto pt-4 md:pt-0">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+                size="sm"
+              >
+                {isLoading ? "Calculating..." : "Calculate Calories"}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

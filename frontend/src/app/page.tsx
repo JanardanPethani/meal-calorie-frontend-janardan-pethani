@@ -3,27 +3,27 @@ import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-12 text-center">
-      <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-6 md:py-12 text-center px-4">
+      <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight">
         Meal Calorie Counter
       </h1>
-      <p className="mt-6 text-xl text-muted-foreground max-w-2xl">
+      <p className="mt-4 md:mt-6 text-base md:text-xl text-muted-foreground max-w-2xl">
         Track the calories in your meals quickly and easily using our powerful
         calorie lookup tool powered by the USDA Food Database.
       </p>
-      <div className="flex flex-col sm:flex-row gap-4 mt-10">
-        <Link href="/register">
-          <Button size="lg" className="min-w-[150px]">
+      <div className="flex flex-col gap-3 mt-6 md:mt-10 w-full max-w-xs">
+        <Link href="/register" className="w-full">
+          <Button size="lg" className="w-full">
             Get Started
           </Button>
         </Link>
-        <Link href="/login">
-          <Button size="lg" variant="outline" className="min-w-[150px]">
+        <Link href="/login" className="w-full">
+          <Button size="lg" variant="outline" className="w-full">
             Login
           </Button>
         </Link>
       </div>
-      <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      <div className="mt-10 md:mt-16 grid grid-cols-1 gap-6 md:gap-8 max-w-4xl mx-auto">
         <div className="flex flex-col items-center p-6 border rounded-lg">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <svg

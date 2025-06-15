@@ -17,7 +17,6 @@ EXPOSE 3000
 
 # Set environment variables
 ENV NODE_ENV=development
-ENV NEXT_TELEMETRY_DISABLED=1
 
 # Start the development server
 CMD ["npm", "run", "dev"] 
